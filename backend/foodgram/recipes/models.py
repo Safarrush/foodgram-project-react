@@ -9,46 +9,53 @@ class Tag(models.Model):
     name = models.CharField(
         unique=True,
         max_length=200,
+        verbose_name='Название'
     )
     color = models.CharField(
         unique=True,
         max_length=7,
+        verbose_name='Цвет в HEX'
     )
     slug = models.SlugField(
         max_length=200,
-        unique=True
+        unique=True,
+        verbose_name='Уникальный слаг'
     )
 
 
 class Recipe(models.Model):
     name = models.CharField(
-        'Название',
-        max_length=200
+        max_length=200,
+        verbose_name='Название'
     )
     tags = models.ManyToManyField(
-        Tag
+        Tag,
+        verbose_name='Список id тегов'
     )
     cooking_time = models.PositiveIntegerField(
-        'Время готовки',
         validators=[
             MinValueValidator(
                 1, message='Минимальное значение 1!'
             )
-        ]
+        ],
+        verbose_name='Время приготовления (в минутах)'
     )
-    text = models.TextField('Описание')
+    text = models.TextField(verbose_name='Описание')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='recipes',
+        verbose_name='Автор рецепта'
     )
     ingredients = models.ManyToManyField(
         'Ingredient',
         through='RecipeIngredient',
-        through_fields=('recipe', 'ingredient')
+        through_fields=('recipe', 'ingredient'),
+        verbose_name='Список ингредиентов'
     )
     image = models.ImageField(
-        blank=True
+        blank=True,
+        verbose_name='Ссылка на картинку на сайте'
     )
 
     class Meta:
@@ -81,7 +88,6 @@ class RecipeIngredient(models.Model):
     )
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(
-        'Количество',
         validators=[
             MinValueValidator(
                 1, message='Минимальное значение 1!'
