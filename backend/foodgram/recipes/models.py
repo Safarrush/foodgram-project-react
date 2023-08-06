@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Sum
+from .validators import validate_hex_color
 
 User = get_user_model()
 
@@ -14,7 +16,8 @@ class Tag(models.Model):
     color = models.CharField(
         unique=True,
         max_length=7,
-        verbose_name='Цвет в HEX'
+        verbose_name='Цвет в HEX',
+        validators=[validate_hex_color]
     )
     slug = models.SlugField(
         max_length=200,
@@ -106,6 +109,19 @@ class RecipeIngredient(models.Model):
             f'{self.amount}'
         )
 
+    def get_shopping_cart_text(self, user):
+        recipe_list = RecipeIngredient.objects.filter(
+            recipe__cart__user=user
+        ).values('ingredient__name', 'ingredient__measurement_unit').annotate(
+            amount=Sum('amount')
+        )
+        text = 'Список покупок для готовки:\n'
+        for i in recipe_list:
+            ingredient = i['ingredient__name']
+            unit = i['ingredient__measurement_unit']
+            amount = i['amount']
+            text += f'{ingredient} - {amount} {unit}\n'
+        return text
 
 class Favorite(models.Model):
     user = models.ForeignKey(

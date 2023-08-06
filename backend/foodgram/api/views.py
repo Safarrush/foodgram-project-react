@@ -22,9 +22,11 @@ from users.models import Follow, User
 
 from foodgram.settings import NAME_OF_F
 
+from api.mixins import FavoriteShoppingCartMixin
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAdminOrReadOnlyPermission, IsAuthorOrReadOnly
+from .serializers import RecipeSerializer
 
 
 class CustomUserViewSet(UserViewSet):
@@ -87,8 +89,9 @@ class TagViewSet(ModelViewSet):
     pagination_class = None
 
 
-class RecipeViewSet(ModelViewSet):
+class RecipeViewSet(FavoriteShoppingCartMixin, ModelViewSet):
     queryset = Recipe.objects.all()
+    #serializer_class = RecipeSerializer
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (IsAuthorOrReadOnly,)
@@ -105,98 +108,11 @@ class RecipeViewSet(ModelViewSet):
             return RecipeGetSerializer
         return RecipeCreateSerializer
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=(IsAuthenticated,))
-    def favorite(self, request, **kwargs):
-        user = self.request.user
-        recipe = get_object_or_404(
-            Recipe,
-            id=kwargs['pk']
-        )
-        if request.method == 'POST':
-            if Favorite.objects.filter(
-                user=user,
-                recipe=recipe
-            ).exists():
-                return Response(
-                    'Такой рецепт уже в избранном!',
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            Favorite.objects.create(user=user, recipe=recipe)
-            serializer = RecipeSampleSerializer(
-                recipe, context={'request': request}
-            )
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-
-        if request.method == 'DELETE':
-            get_object_or_404(
-                Favorite,
-                user=user,
-                recipe=recipe
-            ).delete()
-            return Response(
-                'Рецепт уделен из избранных!',
-                status=status.HTTP_204_NO_CONTENT
-            )
-
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=(IsAuthenticated,))
-    def shopping_cart(self, request, **kwargs):
-        user = self.request.user
-        recipe = get_object_or_404(
-            Recipe,
-            id=kwargs['pk']
-        )
-        if self.request.method == 'POST':
-            if ShoppingCart.objects.filter(
-                user=user,
-                recipe=recipe
-            ).exists():
-                return Response(
-                    'Такой рецепт уже есть!',
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            ShoppingCart.objects.create(user=user, recipe=recipe)
-            serializer = RecipeSampleSerializer(
-                recipe,
-                context={'request': request}
-            )
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        if request.method == 'DELETE':
-            get_object_or_404(
-                ShoppingCart,
-                user=user,
-                recipe=recipe
-            ).delete()
-            return Response(
-                'Рецепт уделен из корзины!',
-                status=status.HTTP_204_NO_CONTENT
-            )
-
     @action(detail=False, methods=['get'],
             permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
-        recipe_list = RecipeIngredient.objects.filter(
-            recipe__cart__user=request.user
-        ).values('ingredient__name',
-                 'ingredient__measurement_unit').annotate(
-            amount=Sum('amount')
-        )
-        text = 'Список покупок для готовки:\n'
-        for i in recipe_list:
-            ingredient = i['ingredient__name']
-            unit = i['ingredient__measurement_unit']
-            amount = i['amount']
-            text += (
-                f'{ingredient} - {amount} '
-                f'{unit}\n'
-            )
+        recipe_ingredient = RecipeIngredient()
+        text = recipe_ingredient.get_shopping_cart_text(request.user)
         response = HttpResponse(content_type='application/pdf; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename={NAME_OF_F}'
         app_path = path.realpath(path.dirname(__file__))

@@ -1,12 +1,10 @@
-import base64
-
-from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from users.models import Follow, User
+from .fields import Base64ImageField
 
 
 class CustomUserSerializer(UserCreateSerializer):
@@ -21,17 +19,6 @@ class CustomUserSerializer(UserCreateSerializer):
             'last_name',
             'password'
         )
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -103,14 +90,14 @@ class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = '__all__'
+        fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit')
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -129,7 +116,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(read_only=True)
-    cooking_time = serializers.ReadOnlyField()
     name = serializers.ReadOnlyField()
 
     class Meta:
@@ -198,6 +184,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if user.is_authenticated:
             return Favorite.objects.filter(
+                user=user,
                 recipe=obj
             ).exists()
         return False
@@ -262,14 +249,34 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     )
     author = UserSerializer(read_only=True)
     image = Base64ImageField()
-    cooking_time = serializers.IntegerField()
     id = serializers.ReadOnlyField()
-    print('Zdes')
 
     class Meta:
         model = Recipe
         fields = '__all__'
         read_only_fields = ('author', 'id',)
+
+    def validate(self, data):
+        if data.get('tags') is None:
+            raise serializers.ValidationError(
+                'Должен быть минимум 1 тег!'
+            )
+        if data.get('ingredients') is None:
+            raise serializers.ValidationError(
+                'Должен быть минимум 1 ингредиент!'
+            )
+        ingredients_data = data.get('ingredients')
+        ingredients_set = set()
+        for ingredient_data in ingredients_data:
+            ingredient = ingredient_data['ingredient']
+            if ingredient in ingredients_set:
+                raise serializers.ValidationError(
+                    'Ингредиент не может повторяться в рецепте!'
+                )
+            ingredients_set.add(ingredient)
+
+        return data
+        
 
     def recipe_ingredient(self, tags, ingredients, recipe):
         recipe.tags.set(tags)

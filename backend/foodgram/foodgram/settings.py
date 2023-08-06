@@ -58,7 +58,6 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            'default_charset': 'utf-8',
         },
     },
 ]
