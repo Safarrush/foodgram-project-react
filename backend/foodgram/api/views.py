@@ -1,15 +1,15 @@
 from os import path
 
+from api.mixins import FavoriteShoppingCartMixin
 from api.serializers import (FollowAuthorSerializer, FollowSerializer,
                              IngredientSerializer, RecipeCreateSerializer,
                              RecipeGetSerializer, RecipeIngredient,
-                             RecipeSampleSerializer, TagSerializer,
+                             TagSerializer,
                              UserSerializer)
-from django.db.models import Sum
 from django.shortcuts import HttpResponse, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from recipes.models import Ingredient, Recipe, Tag
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase import pdfmetrics, ttfonts
 from reportlab.pdfgen import canvas
@@ -22,11 +22,9 @@ from users.models import Follow, User
 
 from foodgram.settings import NAME_OF_F
 
-from api.mixins import FavoriteShoppingCartMixin
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAdminOrReadOnlyPermission, IsAuthorOrReadOnly
-from .serializers import RecipeSerializer
 
 
 class CustomUserViewSet(UserViewSet):
@@ -91,7 +89,6 @@ class TagViewSet(ModelViewSet):
 
 class RecipeViewSet(FavoriteShoppingCartMixin, ModelViewSet):
     queryset = Recipe.objects.all()
-    #serializer_class = RecipeSerializer
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (IsAuthorOrReadOnly,)

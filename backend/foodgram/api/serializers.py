@@ -4,6 +4,7 @@ from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from users.models import Follow, User
+
 from .fields import Base64ImageField
 
 
@@ -276,7 +277,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             ingredients_set.add(ingredient)
 
         return data
-        
 
     def recipe_ingredient(self, tags, ingredients, recipe):
         recipe.tags.set(tags)

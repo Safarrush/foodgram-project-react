@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
+
 from .validators import validate_hex_color
 
 User = get_user_model()
@@ -122,6 +123,7 @@ class RecipeIngredient(models.Model):
             amount = i['amount']
             text += f'{ingredient} - {amount} {unit}\n'
         return text
+
 
 class Favorite(models.Model):
     user = models.ForeignKey(
