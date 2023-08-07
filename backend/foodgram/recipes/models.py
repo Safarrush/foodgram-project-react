@@ -1,7 +1,16 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+
+from foodgram.settings import NAME_OF_F
 
 from .validators import validate_hex_color
 
@@ -123,6 +132,26 @@ class RecipeIngredient(models.Model):
             amount = i['amount']
             text += f'{ingredient} - {amount} {unit}\n'
         return text
+
+    def generate_shopping_cart_pdf(self, user):
+        text = self.get_shopping_cart_text(user)
+        response = HttpResponse(content_type='application/pdf; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename={NAME_OF_F}'
+        app_path = os.path.realpath(os.path.dirname(__file__))
+        font_path = os.path.join(
+            app_path, '/usr/share/fonts/truetype/ArialMT.ttf'
+        )
+        MyFontObject = TTFont('Arial', font_path)
+        pdfmetrics.registerFont(MyFontObject)
+        c = canvas.Canvas(response, pagesize=letter)
+        c.setFont("Arial", 24)
+        lines = text.split("\n")
+        y = 700
+        for line in lines:
+            c.drawString(100, y, line)
+            y -= 30
+        c.save()
+        return response
 
 
 class Favorite(models.Model):

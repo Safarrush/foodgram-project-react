@@ -275,7 +275,15 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     'Ингредиент не может повторяться в рецепте!'
                 )
             ingredients_set.add(ingredient)
+        tags_data = data.get('tags')
+        tags_set = set()
 
+        for tag_data in tags_data:
+            if tag_data in tags_set:
+                raise serializers.ValidationError(
+                    'Тег не может повторяться!'
+                )
+            tags_set.add(tag_data)
         return data
 
     def recipe_ingredient(self, tags, ingredients, recipe):

@@ -1,8 +1,4 @@
-from django.shortcuts import get_object_or_404
-from recipes.models import Favorite, Recipe, ShoppingCart
 from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .serializers import RecipeSampleSerializer
@@ -30,24 +26,3 @@ class FavoriteShoppingCartMixin:
                 'Рецепт удален!',
                 status=status.HTTP_204_NO_CONTENT
             )
-
-    @action(detail=True,
-            methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
-    def favorite(self, request, **kwargs):
-        user = self.request.user
-        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
-        return self.perform_action(
-            user, recipe, Favorite,
-            'Такой рецепт уже в избранном!'
-        )
-
-    @action(detail=True,
-            methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
-    def shopping_cart(self, request, **kwargs):
-        user = self.request.user
-        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
-        return self.perform_action(
-            user, recipe, ShoppingCart, 'Такой рецепт уже есть!'
-        )

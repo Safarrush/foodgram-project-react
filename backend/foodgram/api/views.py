@@ -1,26 +1,18 @@
-from os import path
-
 from api.mixins import FavoriteShoppingCartMixin
 from api.serializers import (FollowAuthorSerializer, FollowSerializer,
                              IngredientSerializer, RecipeCreateSerializer,
                              RecipeGetSerializer, RecipeIngredient,
-                             TagSerializer,
-                             UserSerializer)
-from django.shortcuts import HttpResponse, get_object_or_404
+                             TagSerializer, UserSerializer)
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import Ingredient, Recipe, Tag
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfbase import pdfmetrics, ttfonts
-from reportlab.pdfgen import canvas
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from users.models import Follow, User
-
-from foodgram.settings import NAME_OF_F
 
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
@@ -105,25 +97,30 @@ class RecipeViewSet(FavoriteShoppingCartMixin, ModelViewSet):
             return RecipeGetSerializer
         return RecipeCreateSerializer
 
+    @action(detail=True,
+            methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
+    def favorite(self, request, **kwargs):
+        user = self.request.user
+        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
+        return self.perform_action(
+            user, recipe, Favorite,
+            'Такой рецепт уже в избранном!'
+        )
+
+    @action(detail=True,
+            methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
+    def shopping_cart(self, request, **kwargs):
+        user = self.request.user
+        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
+        return self.perform_action(
+            user, recipe, ShoppingCart, 'Такой рецепт уже есть!'
+        )
+
     @action(detail=False, methods=['get'],
             permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
         recipe_ingredient = RecipeIngredient()
-        text = recipe_ingredient.get_shopping_cart_text(request.user)
-        response = HttpResponse(content_type='application/pdf; charset=utf-8')
-        response['Content-Disposition'] = f'attachment; filename={NAME_OF_F}'
-        app_path = path.realpath(path.dirname(__file__))
-        font_path = path.join(
-            app_path, '/usr/share/fonts/truetype/ArialMT.ttf'
-        )
-        MyFontObject = ttfonts.TTFont('Arial', font_path)
-        pdfmetrics.registerFont(MyFontObject)
-        c = canvas.Canvas(response, pagesize=letter)
-        c.setFont("Arial", 24)
-        lines = text.split("\n")
-        y = 700
-        for line in lines:
-            c.drawString(100, y, line)
-            y -= 30
-        c.save()
+        response = recipe_ingredient.generate_shopping_cart_pdf(request.user)
         return response
