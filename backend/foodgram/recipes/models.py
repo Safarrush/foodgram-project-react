@@ -5,12 +5,11 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.http import HttpResponse
+from foodgram.settings import NAME_OF_F
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-
-from foodgram.settings import NAME_OF_F
 
 from .validators import validate_hex_color
 
