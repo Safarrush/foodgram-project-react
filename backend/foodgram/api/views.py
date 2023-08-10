@@ -1,16 +1,14 @@
-from api.mixins import FavoriteShoppingCartMixin
+from api.mixins import ActionBasedRelationshipMixin
 from api.serializers import (FollowAuthorSerializer, FollowSerializer,
                              IngredientSerializer, RecipeCreateSerializer,
                              RecipeGetSerializer, RecipeIngredient,
-                             TagSerializer, UserSerializer)
-from django.shortcuts import get_object_or_404
+                             RecipeSampleSerializer, TagSerializer,
+                             UserSerializer)
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
-from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from users.models import Follow, User
 
@@ -19,7 +17,7 @@ from .pagination import CustomPagination
 from .permissions import IsAdminOrReadOnlyPermission, IsAuthorOrReadOnly
 
 
-class CustomUserViewSet(UserViewSet):
+class CustomUserViewSet(ActionBasedRelationshipMixin, UserViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = CustomPagination
@@ -30,23 +28,11 @@ class CustomUserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated]
     )
     def subscribe(self, request, **kwargs):
-        author = get_object_or_404(User, id=self.kwargs['id'])
-        user = request.user
-        if request.method == 'POST':
-            serializer = FollowSerializer(
-                author, data=request.data, context={'request': request}
-            )
-            serializer.is_valid(raise_exception=True)
-            Follow.objects.create(user=user, author=author)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if request.method == 'DELETE':
-            get_object_or_404(
-                Follow, user=user, author=author
-            ).delete()
-            return Response(
-                {'detail': 'Отписка совершена успешно!'},
-                status=status.HTTP_204_NO_CONTENT
-            )
+        user = self.request.user
+        serializer = FollowSerializer
+        return self.perform_action(
+            user, Follow, serializer, 'Уже подписан', **kwargs
+        )
 
     @action(
         detail=False,
@@ -79,7 +65,7 @@ class TagViewSet(ModelViewSet):
     pagination_class = None
 
 
-class RecipeViewSet(FavoriteShoppingCartMixin, ModelViewSet):
+class RecipeViewSet(ActionBasedRelationshipMixin, ModelViewSet):
     queryset = Recipe.objects.all()
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
@@ -102,10 +88,10 @@ class RecipeViewSet(FavoriteShoppingCartMixin, ModelViewSet):
             permission_classes=[IsAuthenticated])
     def favorite(self, request, **kwargs):
         user = self.request.user
-        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
+        serializer = RecipeSampleSerializer
         return self.perform_action(
-            user, recipe, Favorite,
-            'Такой рецепт уже в избранном!'
+            user, Favorite, serializer, 'Такой рецепт уже в избранном!',
+            **kwargs
         )
 
     @action(detail=True,
@@ -113,9 +99,9 @@ class RecipeViewSet(FavoriteShoppingCartMixin, ModelViewSet):
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, **kwargs):
         user = self.request.user
-        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
+        serializer = RecipeSampleSerializer
         return self.perform_action(
-            user, recipe, ShoppingCart, 'Такой рецепт уже есть!'
+            user, ShoppingCart, serializer, 'Такой рецепт уже есть!', **kwargs
         )
 
     @action(detail=False, methods=['get'],
