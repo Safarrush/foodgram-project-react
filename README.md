@@ -135,8 +135,8 @@ docker-compose exec backend python manage.py collectstatic --no-input
 Документация будет доступна по адресу: http://localhost/api/docs/
 
 # Об авторе
-Сафаргалеев Рушан
-Python-разработчик (Backend)
-Россия, г. Уфа
-E-mail: safargaleevrushan@yandex.ru
-Telegram: @safa_ru
+- Сафаргалеев Рушан
+- Python-разработчик (Backend)
+- Россия, г. Уфа
+- E-mail: safargaleevrushan@yandex.ru
+- Telegram: @safa_ru
