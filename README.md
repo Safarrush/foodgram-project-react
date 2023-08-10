@@ -39,70 +39,65 @@
 - Доступна и работает форма изменения пароля.
 - Доступна возможность выйти из системы (разлогиниться).
 # Для неавторизованных пользователей
-Доступна главная страница.
-Доступна страница отдельного рецепта.
-Доступна и работает форма авторизации.
-Доступна и работает система восстановления пароля.
-Доступна и работает форма регистрации.
-Администратор и админ-зона
-Все модели выведены в админ-зону.
-Для модели пользователей включена фильтрация по имени и email.
-Для модели рецептов включена фильтрация по названию, автору и тегам.
-На админ-странице рецепта отображается общее число добавлений этого рецепта в избранное.
-Для модели ингредиентов включена фильтрация по названию.
-Инфраструктура
-Проект работает с СУБД PostgreSQL.
-Проект запущен на сервере в Яндекс.Облаке в трёх контейнерах: nginx, PostgreSQL и Django+Gunicorn. Заготовленный контейнер с фронтендом используется для сборки файлов.
-Контейнер с проектом обновляется на Docker Hub.
-В nginx настроена раздача статики, запросы с фронтенда переадресуются в контейнер с Gunicorn. Джанго-админка работает напрямую через Gunicorn.
-Данные сохраняются в volumes.
+- Доступна главная страница.
+- Доступна страница отдельного рецепта.
+- Доступна и работает форма авторизации.
+- Доступна и работает система восстановления пароля.
+- Доступна и работает форма регистрации.
+# Администратор и админ-зона
+- Все модели выведены в админ-зону.
+- Для модели пользователей включена фильтрация по имени и email.
+- Для модели рецептов включена фильтрация по названию, автору и тегам.
+- На админ-странице рецепта отображается общее число добавлений этого рецепта в избранное.
+- Для модели ингредиентов включена фильтрация по названию.
+# Инфраструктура
+- Проект работает с СУБД PostgreSQL.
+- Проект запущен на сервере в Яндекс.Облаке в трёх контейнерах: nginx, PostgreSQL и Django+Gunicorn. Заготовленный контейнер с фронтендом используется для сборки файлов.
+- Контейнер с проектом обновляется на Docker Hub.
+- В nginx настроена раздача статики, запросы с фронтенда переадресуются в контейнер с Gunicorn. Джанго-админка работает напрямую через Gunicorn.
+- Данные сохраняются в volumes.
 
 # Технологии
 
-- [Python 3.8.8](https://www.python.org/downloads/release/python-388/)
-- [Django 2.2.16](https://www.djangoproject.com/download/)
-- [Django Rest Framework 3.13.1](https://www.django-rest-framework.org/)
-- [PostgreSQL 13.0](https://www.postgresql.org/download/)
-- [gunicorn 20.0.4](https://pypi.org/project/gunicorn/)
-- [nginx 1.21.3](https://nginx.org/ru/download.html)
+- Python 3.9
+- Django 3.2
+- Django Rest Framework 3.14.0
+- PostgreSQL 13.0
+- gunicorn
+- nginx
 
 # Контейнер
 
-- [Docker 20.10.14](https://www.docker.com/)
-- [Docker Compose 2.4.1](https://docs.docker.com/compose/)
+- Docker
+- Docker Compose
 
 # URL's
 
-- http://51.250.106.196
-- http://51.250.106.196/admin
-- http://51.250.106.196/api
+- foodgram-safar.ddns.net
+- foodgram-safar.ddns.net/admin
+- foodgram-safar.ddns.net/api
 
 # Админ-панель
 
 Данные для доступа в админ-панель:
 
-email: admin@yandex.ru
+email: Vv
 
-password: admin
-
-# Документация
-
-Для просмотра документации к API перейдите по адресу:
-- http://51.250.106.196/api/redoc
+password: 123Rushan
 
 # Локальная установка
 
 Клонируйте репозиторий и перейдите в него в командной строке:
 ```sh
-git clone https://github.com/nickolaEO/foodgram-project-react.git && cd foodgram-project-react
+git clone git@github.com:Safarrush/foodgram-project-react.git && cd foodgram-project-react
 ```
 Перейдите в директорию с файлом _Dockerfile_ и запустите сборку образа:
 ```sh
-cd backend && docker build -t <DOCKER_USERNAME>/foodgram:<tag> .
+cd backend/foodgram/ && docker build -t <DOCKER_USERNAME>/foodgram:<tag> .
 ```
 Перейдите в директорию с файлом _docker-compose.yaml_:
 ```sh
-cd ../infra
+cd ../../infra
 ```
 Создайте .env файл:
 ```sh
@@ -137,116 +132,11 @@ docker-compose exec backend python manage.py createsuperuser
 ```sh
 docker-compose exec backend python manage.py collectstatic --no-input
 ```
-Наполните БД заготовленными данными:
+Документация будет доступна по адресу: http://localhost/api/docs/
 
-- Ингредиенты:
-```sh
-docker-compose exec backend python manage.py importcsv --filename ingredients.csv --model_name Ingredient --app_name recipes
-```
-- Теги:
-```sh
-docker-compose exec backend python manage.py importcsv --filename tags.csv --model_name Tag --app_name recipes
-```
-Создайте дамп (резервную копию) базы данных:
-```sh
-docker-compose exec backend python manage.py dumpdata > fixtures.json
-```
-Для остановки контейнеров и удаления всех зависимостей воспользуйтесь командой:
-```sh
-docker-compose down -v
-```
-
-# Примеры запросов
-
-**GET**: http://127.0.0.1:8000/api/users/  
-Пример ответа:
-```json
-{
-  "count": 123,
-  "next": "http://127.0.0.1:8000/api/users/?page=4",
-  "previous": "http://127.0.0.1:8000/api/users/?page=2",
-  "results": [
-    {
-      "email": "testuser@yandex.ru",
-      "id": 0,
-      "username": "test.user",
-      "first_name": "Test",
-      "last_name": "User",
-      "is_subscribed": false
-    }
-  ]
-}
-```
-
-**POST**: http://127.0.0.1:8000/api/users/  
-Тело запроса:
-```json
-{
-  "email": "testuser@yandex.ru",
-  "username": "test.user",
-  "first_name": "Test",
-  "last_name": "User",
-  "password": "Qwerty123"
-}
-```
-Пример ответа:
-```json
-{
-"email": "testuser@yandex.ru",
-"id": 0,
-"username": "test.user",
-"first_name": "Test",
-"last_name": "User"
-}
-```
-
-**GET**: http://127.0.0.1:8000/api/recipes/  
-Пример ответа:
-```json
-{
-  "count": 123,
-  "next": "http://127.0.0.1:8000/api/recipes/?page=4",
-  "previous": "http://127.0.0.1:8000/api/recipes/?page=2",
-  "results": [
-    {
-      "id": 0,
-      "tags": [
-        {
-          "id": 0,
-          "name": "Завтрак",
-          "color": "#E26C2D",
-          "slug": "breakfast"
-        }
-      ],
-      "author": {
-        "email": "testuser@yandex.ru",
-        "id": 0,
-        "username": "test.user",
-        "first_name": "Test",
-        "last_name": "User",
-        "is_subscribed": false
-      },
-      "ingredients": [
-        {
-          "id": 0,
-          "name": "Картофель отварной",
-          "measurement_unit": "г",
-          "amount": 1
-        }
-      ],
-      "is_favorited": true,
-      "is_in_shopping_cart": true,
-      "name": "string",
-      "image": "http://127.0.0.1:8000/media/recipes/images/image.jpeg",
-      "text": "string",
-      "cooking_time": 1
-    }
-  ]
-}
-```
-
-## License
-
-MIT
-
-**Free Software**
+# Об авторе
+Сафаргалеев Рушан
+Python-разработчик (Backend)
+Россия, г. Уфа
+E-mail: safargaleevrushan@yandex.ru
+Telegram: @safa_ru
