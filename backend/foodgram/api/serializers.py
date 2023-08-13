@@ -145,7 +145,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'amount')
+        fields = '__all__'
 
 
 class RecipeGetSerializer(serializers.ModelSerializer):
